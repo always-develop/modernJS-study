@@ -369,3 +369,112 @@ Object.getPrototypeOf(me); // {sayHello: ƒ}
         - Object.defineProperties()의 인수와 동일하게 작성한다.
 - 인수가 `null` 이면 Object.prototype 상속을 받지 못한다.
 - 객체를 생성하며 직접 상속을 구현하는 방식이다.
+- `Object.prototype` 빌트인 메서드는 직접호출이 아닌 간접 호출을 권장한다.
+
+```jsx
+/**
+* @prototype 생성할 객체의 프로토타입으로 지정할 객체
+* @[propertiesObject] 생성할 객체의 프로퍼티를 갖는 객체  
+*/
+Object.create(prototype, [propertiesObject])
+
+// 프로토타입 체인의 종점에 위치한다. Object.prototype을 상속받지 못한 상태
+Object.create(null); 
+```
+
+### 19.11.2 객체 리터럴 내부에서 __proto__에 의한 직접 상속
+
+```jsx
+const myProto = { x: 10 };
+
+// 객체 리터럴 내부에서 프로토타입을 상속한다.
+const obj = {
+	y: 20,
+	__proto__: myProto
+};
+
+console.log(obj.x, obj.y); // 10 20
+```
+
+## 19.12 정적 프로퍼티/메서드
+
+- 생성자 함수의 프로토타입에 추가한 프로퍼티와 메서드는 인스턴스에게 상속할 수 있도록 프로토타입 체인에 존재한다.
+- 정적 프로퍼티와 메서드는 프로토타입 체인에 존재하지 않기 때문에 생성자 함수의 인스턴스에서는 참조나 호출할 수 없다.
+    - 이는 생성자 함수에서 직접 참조 또는 호출이 가능하다.
+- 또한 생성자 함수에서 `this` 는 인스턴스 본인을 가리키기 때문에 인스턴스를 참조할 필요 없다면 `this`를 사용하지 않고 정적 메서드로 변경하여도 동작한다.
+- 프로토타입 메서드를 실행하기 위해서는 생성자 함수는 인스턴스를 반드시 생성해야한다.
+    - 그러나 정적 메서드는 인스턴스 생성 없이 호출이 가능하다.
+
+> `Object.prototype.isPrototypeOf`
+ `Object#isPrototypeOf`
+두 개의 표기법은 동일한 의미를 가지고 있다. prototype을 #으로 단축 표기하는 경우도 있다.
+> 
+
+## 19.13 프로퍼티 존재 확인
+
+### 19.13.1 in 연산자
+
+- 객체 내에 특정 프로퍼티의 존재 여부를 확인한다.
+    - `{key} in {object}`
+- 프로퍼티 이외의 상속 받은 모든 프로토타입의 프로퍼티까지 확인한다.
+
+```jsx
+const person = {
+  name: 'Lee'
+}
+
+console.log('toString' in person); // true
+```
+
+- ES6에서는 `Reflect.has` 메서드가 추가되었으며 `in` 과 같은 동작을 한다.
+
+### 19.13.2 Object.prototype.hasOwnProperty 메서드
+
+- `in` 연산자와 동일한 동작을 한다.
+- 하지만 상속받은 프로퍼티 키인 경우 `false` 이다.
+
+## 19.14 프로퍼티 열거
+
+### 19.14.1 for…in 문
+
+- 객체의 모든 프로퍼티를 순회하며 열거한다.
+    - `for {변수선언문 in 객체) {…}`
+
+```jsx
+const person = {
+  name: 'Lee',
+	age: 28
+};
+
+for (const key in person) {
+	console.log(key + ': ' + person[key]);
+}
+
+// name: Lee
+// age: 28
+```
+
+- 상속받은 모든 프로토타입의 프로퍼티도 확인하지만 해당 프로퍼티의 프로퍼티 어트리뷰트 `[[Enumerable]]` 값이 `true`여야 순회한다.
+    - 객체 자신의 프로퍼티만 열거하기 위해서는 `Object.prototype.hasOwnProperty` 메서드를 사용하자.
+- 키가 Symbol이면 열거하지 않는다.
+- 원래는 프로퍼티 열거시 순서를 보장하지 않지만 대부분의 브라우저에서 순서를 보장하고 숫자의 경우 정렬까지 실시한다.
+- 배열에서는 아래의 문을 권장한다.
+    - `for` , `for…of` , `Array.prototype.forEach`
+    - 배열에서 `for…in` 사용시 배열 내에 포함된 객체도 출력된다.
+
+```jsx
+const arr = [1,2,3];
+arr.x =10;
+
+console.log(arr); // [1, 2, 3, x: 10]
+```
+
+### 19.14.2 Object.keys/values/entries 메서드
+
+- 객체 고유의 프로퍼티만 열거하기 위해서 사용한다.
+- Object.keys
+    - 객체 자신의 열거 가능한 프로퍼티 키를 배열로 반환한다.
+- Object.values (ES8)
+    - 객체 자신의 열거 가능한 프로퍼티 값을 배열로 반환한다.
+- Object.entries (ES8)
+    - 객체 자신의 열거 가능한 프로퍼티 키와 값의 쌍의 배열을 배열에 담아 반환한다.
