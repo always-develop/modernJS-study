@@ -79,3 +79,100 @@ console.log(increase()); // 3
 - 이미 소멸된 즉시 실행 함수를 계속 호출할 수 있는 이유는 아직 유지가 되고 있는 중첩 함수때문이다.
     - 중첩 함수는 본인이 정의되었을 때, 외부 렉시컬 환경에 대한 참조에 외부 함수의 렉시컬 환경을 저장하고 있기 때문에 num에 대한 정보를 알고 있고, 참조하고 있는 렉시컬 환경의 외부 함수는 소멸했기 때문에 식별자에 대한 초기화는 하지 않으나 환경만 빌려줄 뿐이다.
 - 이런 식으로 클로저를 잘 활용하면 의도치 않은 상태 변경을 막기 위해 식별자를 은닉하고, 클로저 함수만 상태를 변경할 수 있게 할 수 있다.
+- 생성자 함수에서 클로저를 사용한 예시는 아래와 같다.
+
+```jsx
+const Counter = (function () {
+  // 자유 변수, 생성자 함수의 정적 프로퍼티 => 인스턴스에게 상속 불가
+	let num = 0;
+	
+	// 생성자함수의 프로토타입 함수 => 인스턴스에게 상속 가능
+	Counter.prototype.increase = function () {
+		return ++num;
+	};
+	
+	Counter.prototype.decrease = function () {
+		return num > 0 ? --num : 0;
+	};
+
+	return Counter;
+}());
+```
+
+- 함수형 프로그래밍에서 사용하는 클로저의 예시는 아래와 같다.
+
+```jsx
+function makeCounter(aux) {
+	let counter = 0;
+	
+  // 클로저
+	return function () {
+		// 인수를 통해 보조 함수에게 상태 변경을 위임한다.
+		counter = aux(counter);
+		return counter;
+	};
+}
+
+// 보조함수
+function increase(n) {
+	return ++n;
+}
+// 보조함수
+function decrease(n) {
+	return --n;
+}
+
+const increaser = makeCounter(increase);
+const decreaser = makeCounter(decrease);
+```
+
+- 이 경우에 makeCounter함수는 계속 호출할 수 있는 상태이기 때문에 increase와 decrease함수는 자유변수를 공유하는 상태는 아니다. 다른 렉시컬 환경을 참조하게 된다.
+- 이는 즉시 실행 함수 형태로 변경하여 렉시컬 환경을 공유하게끔 해야한다.
+
+## 24.5 캡슐화와 정보 은닉
+
+- 캡슐화?
+    - 객체의 상태를 나타내는 프로퍼티와 프로퍼티를 참조하고 조작할 수 있는 메서드의 조합
+    - 이는 은닉이라고 표현된다.
+    - 캡슐화를 통해 결합도를 낮출 수 있다. 외부에서 객체의 상태를 조작할 수 없도록 하기 위해서.
+- 자바스크립트에서는 접근 제한자를 제공하지 않기 때문에 기본적으로 객체의 모든 프로퍼티와 메서드는 public하다.
+- 아래는 자바스크립트로 캡슐화를 구현해본 예시이다.
+
+```jsx
+const Person = (function () {
+	let _age = 0;
+
+	function Person(name, age) {
+		this.name = name;
+		_age = age;
+	}
+
+	Person.prototype.sayHi = function () {
+		console.log(`Hi! My name is ${this.name}. I am ${_age}`);
+	};
+
+	return Person;
+}());
+
+const me = new Person('Lee', 20);
+me.sayHi(); // Hi! My name is Lee. I am 20
+const you = new Person('Kim', 30);
+you.sayHi(); // Hi! My name is Kim. I am 30
+
+// _age값이 유지되지 않는다.
+me.sayHi(); // Hi! My name is Lee. I am 30
+```
+
+- 마지막 _age의 값은 가장 최근 할당된 변수로 변경되었다.
+    - 그 말은 즉슨, me와 you 인스턴스는 동일한 렉시컬 환경을 바라보고 있다는 말이다.
+        - 이유는 즉시 실행 함수는 정의되는 동시에 단 한번 실행되기 때문에 인스턴스 생성시마다 새로운 렉시컬 환경을 만들지 않는다.
+- 이런 이유 때문에 인스턴스끼리 자유 변수의 값이 공유되어 하나의 인스턴스 상태 유지가 어렵다.
+- 그러므로 자바스크립트는 완벽한 정보 은닉을 지원하지 않는다.
+- 최신 브라우저와 Node.js 12 이상에서는 `private` 필드를 정의할 수 있도록 지원한다고 한다.
+
+## 24.6 자주 발생하는 실수
+
+- 함수 레벨 스코프만 지원하는 var는 사용하지 말자.
+    - 반복문이 동작할 때마다 새로운 렉시컬 환경을 생성하지 않기 때문에 혼동을 준다.
+- 블록 레벨 스코프를 지원하는 let과 const를 사용하면 예상한대로 반복문이 동작한다.
+    - 반복문이 시작할 때마다 새로운 렉시컬 환경을 생성하며 식별자 값을 유지한다.
