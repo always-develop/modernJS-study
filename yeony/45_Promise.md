@@ -84,3 +84,28 @@ const promise = new Promise((resolve, reject) => {
 ### Prmoise.all
 
 - 여러 개의 비동기 처리를 병렬 처리할 때 사용
+- 모든 프로미스의 fulfilled 상태를 기다린다.
+
+### Promise.race
+
+- all과 동일하게 이터러블을 인수로 받는다.
+- 먼저 fulfilled상태가 된 프로미스를 resolve 한다.
+
+### Promise.allSettled
+
+- fulfilled 상태가 아닌 settled 상태가 되면 결과를 반환한다.
+
+## 45.7 마이크로태스크 큐
+
+- 프로미스 후속 처리 메서드의 콜백 함수는 `마이크로태스크 큐`에 저장된다.
+    - 일반 비동기 함수는 `태스크 큐`에 저장된다.
+- 마이크로태스크 큐는 태스크 큐보다 우선순위가 높다.
+- 실행 순서: 콜 스택 → 마이크로태스크 큐 → 태스크 큐
+
+## 45.8 fetch
+
+- HTTP 요청 전송 기능과 프로미스를 지원하는 Web API
+- response 객체를 래핑한 Promise 객체를 반환한다.
+    - response.json()을 통해 역직렬화해야 사용 가능하다.
+- 네트워크 장애나 CORS 에러만 프로미스를 reject하기 때문에 에러 처리를 명시적으로 해야 한다.
+- axios는 모든 에러를 catch에서 처리한다.
